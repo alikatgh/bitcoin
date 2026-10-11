@@ -1,0 +1,23 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local Bitcoin wallet and node data
+wallet.dat
+wallets/
+.bitcoin/
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and local scratch
+*.log
+tmp/
+.cache/
