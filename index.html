@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111817">
+  <meta name="description" content="Bitcoin, in motion. A continuous, scroll-driven journey through the mechanics of peer-to-peer money.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <title>Bitcoin, in motion</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./src/style.css">
+  <script src="./vendor/anime.umd.min.js" defer></script>
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-progress"></span></div>
+  <header class="site-header">
+    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 7v18m5-21v24M8 9h12c7 0 7 7 0 7H8m3 0h10c8 0 8 8 0 8H8"/></svg><span>bitcoin <span class="brand-note">in motion</span></span></div>
+    <span class="header-note">A SYSTEM IN TWELVE IDEAS</span>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy"><p class="eyebrow">PEER TO PEER. BLOCK BY BLOCK.</p><h1 id="hero-title">Money,<br>without the<br><span>middleman.</span></h1><p class="hero-description">A signature. A shared history. A network that agrees.<br>Follow the mechanics of Bitcoin.</p></div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 600 650" fill="none"><g class="hero-wire" stroke="currentColor" stroke-width="1"><path d="M60 180 300 40l240 140v280L300 600 60 460Z M60 180l240 140 240-140M300 320v280M180 110l240 140v280M420 110 180 250v280M60 320l240 140 240-140"/><path d="m180 250 120-70 120 70v140l-120 70-120-70Z"/></g><g class="hero-core" stroke="currentColor" stroke-width="2"><path d="m180 250 120-70 120 70v140l-120 70-120-70Z M180 250l120 70 120-70M300 320v140"/><path d="M265 249v66m18-80v81m-28-62h42c27 0 27 26 0 26h-42m10 0h34c29 0 29 28 0 28h-44" stroke-width="3" transform="translate(0 15)"/></g><circle class="hero-packet" cx="300" cy="40" r="6" fill="currentColor"/></svg>
+      </div>
+      <div class="scroll-cue" aria-hidden="true"><span class="scroll-line"></span><span>SCROLL TO SET IT IN MOTION</span><span>↓</span></div>
+      <div class="hero-count" aria-hidden="true">01 — 12</div>
+    </section>
+    <div id="chapters"></div>
+    <section class="ending"><p class="eyebrow">EVERY PART HAS A PURPOSE.</p><p>From a single signature<br>to a <span>shared history.</span></p><div class="ending-rule"></div><span>Bitcoin, in motion.</span></section>
+  </main>
+  <noscript><p class="noscript">Enable JavaScript to see the animations.</p></noscript>
+</body>
+</html>

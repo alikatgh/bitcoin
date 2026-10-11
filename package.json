@@ -1,0 +1,14 @@
+{
+  "name": "bitcoin-in-motion",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An interactive, animated guide to Satoshi Nakamoto's Bitcoin whitepaper.",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check src/app.js && node --check src/scenes.js && node --check src/chapters.js && node --check src/math.js && node --check src/playback.js && node --check server.js"
+  },
+  "engines": { "node": ">=20" }
+}
