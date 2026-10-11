@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clampProgress, stepAt, scrollProgress } from '../src/playback.js';
+import { clampProgress, stepAt, scrollProgress, journeyProgress } from '../src/playback.js';
 
 test('progress clamps malformed and overscrolled positions', () => {
   for (const input of [NaN, Infinity, undefined, 'bad', -1]) assert.equal(clampProgress(input), 0);
@@ -26,4 +26,18 @@ test('narrow viewport moves the reading anchor below the sticky visual', () => {
   assert.equal(scrollProgress(-784, 2096, 800, true), .5);
   assert.equal(scrollProgress(-2224, 656, 800, true), 1);
   assert.equal(scrollProgress(0, 0, 800, true), 1);
+});
+
+test('one pinned journey advances and rewinds over the actual scrollable distance', () => {
+  assert.deepEqual([0, -3750, -7500, -11250, -15000].map(top => journeyProgress(top, 16000, 1000)), [0, .25, .5, .75, 1]);
+  assert.deepEqual([-15000, -7500, 0].map(top => journeyProgress(top, 16000, 1000)), [1, .5, 0]);
+  assert.equal(journeyProgress(100, 16000, 1000), 0);
+  assert.equal(journeyProgress(-20000, 16000, 1000), 1);
+  assert.equal(journeyProgress(-9000, 19000, 1000), .5);
+});
+
+test('a non-scrolling or malformed journey has a safe initial state', () => {
+  for (const args of [[0, 800, 800], [-10, 300, 800], [NaN, 16000, 1000], [0, Infinity, 1000]]) {
+    assert.equal(journeyProgress(...args), 0);
+  }
 });

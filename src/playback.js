@@ -11,3 +11,9 @@ export function scrollProgress(firstTop, lastBottom, viewportHeight, mobile = fa
   const anchor = viewportHeight * (mobile ? 0.82 : 0.56);
   return clampProgress((anchor - firstTop) / Math.max(1, lastBottom - firstTop));
 }
+
+export function journeyProgress(top, height, viewportHeight) {
+  const distance = height - viewportHeight;
+  if (!Number.isFinite(top) || !Number.isFinite(distance) || distance <= 0) return 0;
+  return clampProgress(-top / distance);
+}
