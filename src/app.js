@@ -1,72 +1,104 @@
-import { createContinuousScene } from './continuous-scene.js';
-import { clampProgress, journeyProgress } from './playback.js';
+import { createBitcoinScene } from './bitcoin-scene.js';
+import { mountScrollDriver } from './scroll-driver.js';
+import { sampleStory, sampleTheme, story, safeProgress } from './story.js';
 
-const journey = document.getElementById('journey');
-const world = document.getElementById('world');
-const cue = document.getElementById('scroll-cue');
-const indicator = document.getElementById('reading-progress');
-const accessibleState = document.getElementById('accessible-state');
-const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-const descriptions = [
-  'A payment travels directly between two wallets.',
-  'The owner signs the payment with a private key. The key stays with the owner.',
-  'Peers receive and independently check the signed payment.',
-  'The payment joins other transactions in a block linked to earlier history.',
-  'Many work attempts precede a valid block. Peers can check the result.',
-  'The accepted block extends the shared chain. The miner receives a reward and fees.',
-  'Transaction details condense into a Merkle tree while its root stays in the block header.',
-  'A short sibling proof links the same payment to a header in the chain.',
-  'Inputs combine and split into a payment, change, and a fee without creating value.',
-  'Public addresses and transfers are visible. Private identities remain separate.',
-  'The honest chain gains work. A competing branch remains possible but less likely to catch up.',
-  'The original payment stays inside the shared history as more blocks extend it.',
-];
-let frame = 0;
-let previousProgress = -1;
-let previousPhase = -1;
+const byId = id => document.getElementById(id);
+const journey = byId('journey');
+const world = byId('world');
+const stage = byId('stage');
+const copy = byId('copy');
+const fallback = byId('fallback');
+const annotations = byId('annotations');
+let previousIndex = -1;
+let scene;
+let driver;
+const rgb = values => `rgb(${values.join(',')})`;
+
+// The complete explanation remains readable with assistive technology.
+for (const chapter of story) {
+  const heading = document.createElement('h2');
+  heading.textContent = chapter.title.join(' ');
+  const paragraph = document.createElement('p');
+  paragraph.textContent = `${chapter.body}${chapter.readout ? ` ${chapter.readout}` : ''}`;
+  byId('transcript').append(heading, paragraph);
+}
+
+function drawAnnotations(result, chapter, state) {
+  const anchors = result?.anchors || [];
+  annotations.style.opacity = state.index === 0 || state.index === 10 ? '0' : String(state.opacity * .85);
+  ['primary', 'secondary'].forEach((id, i) => {
+    const label = byId(`label-${id}`);
+    label.textContent = chapter.labels[i];
+    const anchor = anchors.find(item => item.id === id);
+    const visible = anchor && anchor.visible !== false && Number.isFinite(anchor.x) && Number.isFinite(anchor.y);
+    const line = byId(`leader-${id}`);
+    const dot = byId(`anchor-${id}`);
+    line.style.opacity = dot.style.opacity = label.style.opacity = visible ? '1' : '0';
+    if (!visible) return;
+    const x = safeProgress(anchor.x) * 1000;
+    const y = safeProgress(anchor.y) * 1000;
+    const endX = (1 - .048 - label.getBoundingClientRect().width / world.clientWidth) * 1000 - 8;
+    const endY = (i ? .23 : .18) * 1000 + 7;
+    const elbowX = Math.min(x + 20, endX - 24);
+    line.setAttribute('d', `M${x.toFixed(2)},${y.toFixed(2)}L${elbowX.toFixed(2)},${endY}H${endX.toFixed(2)}`);
+    dot.setAttribute('cx', x.toFixed(2));
+    dot.setAttribute('cy', y.toFixed(2));
+  });
+}
+
+function present({ progress, visualProgress, sceneResult }) {
+  if (sceneResult?.ready === false) return;
+  const state = sampleStory(visualProgress);
+  const chapter = story[state.index];
+  if (previousIndex !== state.index) {
+    previousIndex = state.index;
+    const title = byId('headline');
+    title.replaceChildren();
+    chapter.title.forEach((line, i) => {
+      if (i) title.append(document.createElement('br'));
+      title.append(document.createTextNode(line));
+    });
+    const caption = `${String(state.index + 1).padStart(2, '0')} / ${chapter.name}`;
+    byId('eyebrow').textContent = caption;
+    byId('chapter-caption').textContent = caption;
+    byId('description').textContent = chapter.body;
+    byId('readout').textContent = chapter.readout || '';
+    byId('readout').hidden = !chapter.readout;
+    byId('accessible-state').textContent = `${chapter.title.join(' ')} ${chapter.body}${chapter.readout ? ` ${chapter.readout}` : ''}`;
+    copy.dataset.index = state.index;
+  }
+  copy.style.opacity = String(state.opacity);
+  copy.style.transform = `translateY(${state.offset.toFixed(2)}px)`;
+  const theme = sampleTheme(state.light);
+  stage.style.backgroundColor = rgb(theme.background);
+  const light = state.light > .45;
+  stage.style.setProperty('--ink', rgb(theme.ink));
+  stage.style.setProperty('--muted', rgb(theme.muted));
+  stage.style.setProperty('--rule', rgb(theme.rule));
+  stage.dataset.theme = light ? 'light' : 'dark';
+  world.dataset.progress = progress.toFixed(5);
+  byId('reading-progress').style.left = `${progress * 100}%`;
+  byId('progress-number').textContent = String(Math.round(progress * 100)).padStart(2, '0');
+  byId('scroll-cue').style.opacity = String(1 - safeProgress(progress * 30));
+  byId('chapter-caption').style.opacity = String(safeProgress((progress - .035) * 30));
+  drawAnnotations(sceneResult, chapter, state);
+  fallback.setAttribute('hidden', '');
+  byId('load-status').hidden = true;
+}
+
+function showFallback(error) {
+  fallback.removeAttribute('hidden');
+  annotations.style.opacity = '0';
+  byId('load-status').hidden = false;
+  console.error(error);
+}
 
 try {
   if (!window.anime?.createTimeline) throw new Error('Animation library unavailable');
-  const scene = createContinuousScene(world);
-  const model = { value: 0 };
-  const timeline = window.anime.createTimeline({ autoplay: false })
-    .add(model, { value: [0, 1], duration: 12000, ease: 'linear' }, 0);
-  document.getElementById('fallback').setAttribute('hidden', '');
-
-  function update() {
-    frame = 0;
-    const bounds = journey.getBoundingClientRect();
-    const progress = journeyProgress(bounds.top, bounds.height, window.innerHeight);
-    if (progress === previousProgress) return;
-    previousProgress = progress;
-    // Seeking, rather than playing a second clock, makes every frame reversible.
-    const visualProgress = motionPreference.matches ? Math.floor(progress * 48) / 48 : progress;
-    timeline.seek(visualProgress * 12000, true);
-    scene.render(model.value, { reducedMotion: motionPreference.matches, aspect: world.clientWidth / world.clientHeight });
-    world.dataset.progress = progress.toFixed(5);
-    indicator.style.transform = `scaleX(${progress})`;
-    cue.style.opacity = String(1 - clampProgress(progress * 45));
-    const phase = Math.min(descriptions.length - 1, Math.floor(progress * descriptions.length));
-    if (phase !== previousPhase) {
-      previousPhase = phase;
-      accessibleState.textContent = descriptions[phase];
-    }
-  }
-
-  function schedule() {
-    if (!frame) frame = requestAnimationFrame(update);
-  }
-
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', () => { previousProgress = -1; schedule(); });
-  window.addEventListener('pageshow', schedule);
-  motionPreference.addEventListener('change', () => { previousProgress = -1; schedule(); });
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { previousProgress = -1; schedule(); }
-  });
-  schedule();
+  scene = createBitcoinScene(world);
+  driver = mountScrollDriver({ journey, world, scene, anime: window.anime, window, document, onFrame: present, onError: showFallback });
+  world.addEventListener('scene-lost', () => showFallback(new Error('The 3D context was interrupted.')));
 } catch (error) {
-  // The static visual stays in place if the animation cannot initialize.
-  accessibleState.textContent = 'The animation could not load. Reload this page to try again.';
-  console.error(error);
+  scene?.destroy();
+  showFallback(error);
 }

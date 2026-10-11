@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "One continuous, wordless, scroll-driven Bitcoin animation.",
+  "description": "A continuous, scroll-driven 3D explanation of Bitcoin.",
   "license": "MIT",
   "scripts": {
     "start": "node server.js",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check src/app.js && node --check src/continuous-scene.js && node --check src/scenes.js && node --check src/chapters.js && node --check src/math.js && node --check src/playback.js && node --check server.js"
+    "check": "node --check src/app.js && node --check src/bitcoin-scene.js && node --check src/story.js && node --check src/scroll-driver.js && node --check src/continuous-scene.js && node --check src/scenes.js && node --check src/chapters.js && node --check src/math.js && node --check src/playback.js && node --check server.js"
   },
   "engines": {
     "node": ">=20"
